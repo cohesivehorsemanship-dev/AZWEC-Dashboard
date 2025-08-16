@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AZWEC Score Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #718096;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 14px;
+        }
+        
+        .tabs {
+            background: white;
+            border-radius: 10px;
+            padding: 5px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 5px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: transparent;
+            color: #718096;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            background: #f7fafc;
+        }
+        
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #f7fafc;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        tr:hover {
+            background: #f7fafc;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-licensed {
+            background: #ebf8ff;
+            color: #2b6cb0;
+        }
+        
+        .badge-schooling {
+            background: #f0fff4;
+            color: #276749;
+        }
+        
+        .badge-qualified {
+            background: #f0fff4;
+            color: #276749;
+            border: 2px solid #9ae6b4;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        
+        .badge-not-qualified {
+            background: #fffaf0;
+            color: #c05621;
+            border: 2px solid #fbd38d;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .place-badge {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: bold;
+            background: #667eea;
+            color: white;
+        }
+        
+        .qualifying-score {
+            color: #276749;
+            font-weight: 600;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .placement-badge {
+            display: inline-block;
+            background: #4a5568;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <h1>🏇 AZWEC Score Tracker</h1>
+                    <p>Track your scores, standings, and AZWEC Finals eligibility</p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="font-size: 12px; color: #718096;">Last Updated</p>
+                    <p id="lastUpdated" style="font-weight: 600;">Loading...</p>
+                    <button onclick="loadData()" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        ↻ Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalScores">0</div>
+                <div class="stat-label">Total Scores</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPairs">0</div>
+                <div class="stat-label">Rider/Horse Pairs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="schoolingShows">0</div>
+                <div class="stat-label">Schooling Shows</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="licensedShows">0</div>
+                <div class="stat-label">Licensed Shows</div>
+            </div>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('all')">📊 All Scores</button>
+            <button class="tab" onclick="switchTab('schooling')">🏫 Schooling EOY</button>
+            <button class="tab" onclick="switchTab('licensed')">🏆 Licensed EOY</button>
+            <button class="tab" onclick="switchTab('finals')">🎯 Finals Eligibility</button>
+        </div>
+        
+        <!-- Filters (shown only for All Scores) -->
+        <div id="filtersSection" class="content-card" style="margin-bottom: 20px;">
+            <h3 style="margin-bottom: 20px;">Filter Scores</h3>
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Search Rider or Horse</label>
+                    <input type="text" id="filterRider" placeholder="Enter name..." onkeyup="filterScores()">
+                </div>
+                <div class="filter-group">
+                    <label>Filter by Level</label>
+                    <select id="filterLevel" onchange="filterScores()">
+                        <option value="">All Levels</option>
+                        <option value="L1">Level 1</option>
+                        <option value="L2">Level 2</option>
+                        <option value="L3">Level 3</option>
+                        <option value="L4">Level 4</option>
+                        <option value="L5">Level 5</option>
+                        <option value="L6">Level 6</option>
+                        <option value="L7">Level 7</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Filter by Division</label>
+                    <select id="filterDivision" onchange="filterScores()">
+                        <option value="">All Divisions</option>
+                        <option value="Open">Open</option>
+                        <option value="Amateur">Amateur</option>
+                        <option value="Youth">Youth</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="content-card">
+            <div id="loadingSection" class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 20px; color: #718096;">Loading scores...</p>
+            </div>
+            
+            <div id="contentSection" style="display: none;">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Your Google Apps Script Web App URL
+        const DATA_URL = 'https://script.google.com/macros/s/AKfycbykBCZLLe_pCqxOo8uBKEFPestwRSdKVJupeSzPJEmqtwQtEooGI40CuxSgmxIAbrCNZw/exec';
+        
+        let allData = null;
+        let currentView = 'all';
+        
+        // Load data on page load
+        window.onload = function() {
+            loadData();
+        };
+        
+        function loadData() {
+            document.getElementById('loadingSection').style.display = 'block';
+            document.getElementById('contentSection').style.display = 'none';
+            
+            // Use JSONP to bypass CORS
+            const script = document.createElement('script');
+            const callbackName = 'handleDataResponse';
+            
+            // Create callback function
+            window[callbackName] = function(data) {
+                allData = data;
+                
+                // Update stats
+                document.getElementById('totalScores').textContent = data.allScores.length;
+                document.getElementById('totalPairs').textContent = countUnique(data.allScores, 'riderHorsePair');
+                document.getElementById('schoolingShows').textContent = countUnique(data.schoolingShows, 'showName');
+                document.getElementById('licensedShows').textContent = countUnique(data.licensedShows, 'showName');
+                
+                // Update last updated
+                document.getElementById('lastUpdated').textContent = new Date(data.timestamp).toLocaleString();
+                
+                // Show content
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('contentSection').style.display = 'block';
+                
+                // Display current view
+                displayCurrentView();
+                
+                // Clean up
+                document.head.removeChild(script);
+                delete window[callbackName];
+            };
+            
+            // Add error handling
+            script.onerror = function() {
+                document.getElementById('loadingSection').innerHTML = `
+                    <div class="error">
+                        <h3>Error Loading Data</h3>
+                        <p>Could not connect to the data server.</p>
+                        <p>Please try refreshing the page or contact your administrator.</p>
+                        <button onclick="loadData()" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+            };
+            
+            // Load data using JSONP
+            script.src = DATA_URL + '?callback=' + callbackName;
+            document.head.appendChild(script);
+        }
+        
+        function countUnique(array, field) {
+            const unique = new Set(array.map(item => item[field]));
+            return unique.size;
+        }
+        
+        function displayCurrentView() {
+            // Display content based on current view without needing event
+            const content = document.getElementById('contentSection');
+            
+            switch(currentView) {
+                case 'all':
+                    displayAllScores();
+                    break;
+                case 'schooling':
+                    displayEOYStandings(allData.schoolingShows, 'Schooling Show End of Year Standings');
+                    break;
+                case 'licensed':
+                    displayEOYStandings(allData.licensedShows, 'Licensed Show End of Year Standings');
+                    break;
+                case 'finals':
+                    displayFinalsEligibility();
+                    break;
+            }
+        }
+        
+        function switchTab(tab) {
+            currentView = tab;
+            
+            // Update active tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // If no event, find and activate the right tab
+                document.querySelectorAll('.tab').forEach(t => {
+                    if ((tab === 'all' && t.textContent.includes('All Scores')) ||
+                        (tab === 'schooling' && t.textContent.includes('Schooling')) ||
+                        (tab === 'licensed' && t.textContent.includes('Licensed')) ||
+                        (tab === 'finals' && t.textContent.includes('Finals'))) {
+                        t.classList.add('active');
+                    }
+                });
+            }
+            
+            // Show/hide filters
+            document.getElementById('filtersSection').style.display = tab === 'all' ? 'block' : 'none';
+            
+            // Display content
+            displayCurrentView();
+        }
+        
+        function displayAllScores() {
+            const scores = filterScoresList();
+            
+            let html = `
+                <h2 style="margin-bottom: 20px;">All Scores</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Show</th>
+                                <th>Type</th>
+                                <th>Judge</th>
+                                <th>Rider</th>
+                                <th>Horse</th>
+                                <th>Level</th>
+                                <th>Division</th>
+                                <th style="text-align: right;">Dressage %</th>
+                                <th style="text-align: right;">EOH %</th>
+                                <th style="text-align: right;">Average %</th>
+                                <th style="text-align: center;">Place</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            scores.forEach(score => {
+                const avgClass = score.average >= 58 ? 'qualifying-score' : '';
+                const placementDisplay = score.placement ? `<span class="placement-badge">#${score.placement}</span>` : '-';
+                html += `
+                    <tr>
+                        <td>${score.showDate}</td>
+                        <td>${score.showName}</td>
+                        <td><span class="badge ${score.isLicensed ? 'badge-licensed' : 'badge-schooling'}">${score.isLicensed ? 'Licensed' : 'Schooling'}</span></td>
+                        <td>${score.judgeName}</td>
+                        <td><strong>${score.rider}</strong></td>
+                        <td>${score.horse}</td>
+                        <td style="text-align: center;">${score.level}</td>
+                        <td>${score.division}</td>
+                        <td style="text-align: right;">${score.dressageScore.toFixed(2)}</td>
+                        <td style="text-align: right;">${score.eohScore.toFixed(2)}</td>
+                        <td style="text-align: right;" class="${avgClass}"><strong>${score.average.toFixed(2)}</strong></td>
+                        <td style="text-align: center;">${placementDisplay}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('contentSection').innerHTML = html;
+        }
+        
+        function filterScoresList() {
+            let scores = [...allData.allScores];
+            
+            const riderFilter = document.getElementById('filterRider').value.toLowerCase();
+            const levelFilter = document.getElementById('filterLevel').value;
+            const divisionFilter = document.getElementById('filterDivision').value;
+            
+            if (riderFilter) {
+                scores = scores.filter(s => 
+                    s.rider.toLowerCase().includes(riderFilter) || 
+                    s.horse.toLowerCase().includes(riderFilter)
+                );
+            }
+            
+            if (levelFilter) {
+                scores = scores.filter(s => s.level === levelFilter);
+            }
+            
+            if (divisionFilter) {
+                scores = scores.filter(s => s.division === divisionFilter);
+            }
+            
+            return scores.sort((a, b) => b.showDate.localeCompare(a.showDate));
+        }
+        
+        function filterScores() {
+            if (currentView === 'all') {
+                displayAllScores();
+            }
+        }
+        
+        function calculateEOYStandings(shows) {
+            // Group by level-division-pair
+            const grouped = {};
+            shows.forEach(score => {
+                const key = `${score.level}-${score.division}-${score.riderHorsePair}`;
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(score);
+            });
+            
+            const standings = [];
+            
+            Object.entries(grouped).forEach(([key, scores]) => {
+                const parts = key.split('-');
+                const level = parts[0];
+                const division = parts[1];
+                const riderHorsePair = parts.slice(2).join('-');
+                
+                // Sort by average (highest first) and take top 4 shows
+                scores.sort((a, b) => b.average - a.average);
+                const topScores = scores.slice(0, 4);
+                
+                if (topScores.length >= 2) {
+                    // Calculate points from ACTUAL PLACEMENTS in the shows
+                    let totalPoints = 0;
+                    topScores.forEach(score => {
+                        // Points based on placement: 1st = 10, 2nd = 9, etc.
+                        if (score.placement && score.placement > 0) {
+                            totalPoints += Math.max(0, 11 - score.placement);
+                        }
+                    });
+                    
+                    const totalAverage = topScores.reduce((sum, s) => sum + s.average, 0) / topScores.length;
+                    
+                    standings.push({
+                        riderHorsePair,
+                        level,
+                        division,
+                        showCount: topScores.length,
+                        shows: topScores.map(s => ({
+                            name: s.showName,
+                            date: s.showDate,
+                            average: s.average,
+                            placement: s.placement
+                        })),
+                        overallAverage: totalAverage,
+                        points: totalPoints  // This is now from actual placements!
+                    });
+                }
+            });
+            
+            // Group by level/division for final ranking
+            const levelDivGroups = {};
+            standings.forEach(s => {
+                const key = `${s.level}-${s.division}`;
+                if (!levelDivGroups[key]) levelDivGroups[key] = [];
+                levelDivGroups[key].push(s);
+            });
+            
+            // Sort by POINTS (using average only for ties) and assign places
+            Object.values(levelDivGroups).forEach(group => {
+                group.sort((a, b) => {
+                    if (b.points !== a.points) {
+                        return b.points - a.points; // Sort by points first
+                    }
+                    return b.overallAverage - a.overallAverage; // Use average to break ties
+                });
+                
+                // Assign final places
+                group.forEach((item, index) => {
+                    item.place = index + 1;
+                });
+            });
+            
+            // Final sort for display
+            return standings.sort((a, b) => {
+                if (a.level !== b.level) return a.level.localeCompare(b.level);
+                if (a.division !== b.division) return a.division.localeCompare(b.division);
+                return a.place - b.place; // Sort by place within each level/division
+            });
+        }
+        
+        function displayEOYStandings(shows, title) {
+            const standings = calculateEOYStandings(shows);
+            
+            let html = `
+                <h2 style="margin-bottom: 20px;">${title}</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Place</th>
+                                <th>Rider/Horse</th>
+                                <th>Level</th>
+                                <th>Division</th>
+                                <th>Shows Used (Top 4)</th>
+                                <th style="text-align: right;">Points</th>
+                                <th style="text-align: right;">Overall Avg %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            standings.forEach(standing => {
+                const showDetails = standing.shows.map(s => {
+                    const placeText = s.placement ? `<span class="placement-badge">#${s.placement}</span>` : '';
+                    return `${s.date}: ${s.average.toFixed(2)}% ${placeText}`;
+                }).join('<br>');
+                
+                html += `
+                    <tr>
+                        <td><span class="place-badge">${standing.place}</span></td>
+                        <td><strong>${standing.riderHorsePair}</strong></td>
+                        <td style="text-align: center;">${standing.level}</td>
+                        <td>${standing.division}</td>
+                        <td>${showDetails}</td>
+                        <td style="text-align: right;"><strong style="font-size: 18px;">${standing.points}</strong></td>
+                        <td style="text-align: right;"><strong>${standing.overallAverage.toFixed(2)}%</strong></td>
+                    </tr>
+                `;
+            });
+            
+            if (standings.length === 0) {
+                html += `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #718096;">
+                            No standings available yet (riders need at least 2 shows to qualify)
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('contentSection').innerHTML = html;
+        }
+        
+        function displayFinalsEligibility() {
+            const eligibility = checkFinalsEligibility();
+            
+            let html = `
+                <h2 style="margin-bottom: 20px;">AZWEC Finals Eligibility</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rider/Horse</th>
+                                <th>Level</th>
+                                <th>Division</th>
+                                <th style="text-align: right;">Average %</th>
+                                <th style="text-align: center;">Qualifying Shows</th>
+                                <th style="text-align: center;">Status</th>
+                                <th>Show Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            eligibility.forEach(item => {
+                const statusBadge = item.isQualified ? 'badge-qualified' : 'badge-not-qualified';
+                const statusText = item.isQualified ? '✓ QUALIFIED' : 'NOT YET';
+                
+                html += `
+                    <tr>
+                        <td><strong>${item.riderHorsePair}</strong></td>
+                        <td style="text-align: center;">${item.level}</td>
+                        <td>${item.division}</td>
+                        <td style="text-align: right;"><strong>${item.averageScore.toFixed(2)}%</strong></td>
+                        <td style="text-align: center;"><strong>${item.qualifyingShows} / ${item.requiredShows}</strong></td>
+                        <td style="text-align: center;"><span class="badge ${statusBadge}">${statusText}</span></td>
+                        <td>${item.shows.map(s => `${s.date}: ${s.average.toFixed(2)}% ${s.qualifying ? '✓' : ''}`).join('<br>')}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('contentSection').innerHTML = html;
+        }
+        
+        function checkFinalsEligibility() {
+            const allShows = [...allData.schoolingShows, ...allData.licensedShows];
+            
+            // Group by level-division-pair
+            const grouped = {};
+            allShows.forEach(score => {
+                const key = `${score.level}-${score.division}-${score.riderHorsePair}`;
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(score);
+            });
+            
+            const eligibility = [];
+            
+            Object.entries(grouped).forEach(([key, scores]) => {
+                const parts = key.split('-');
+                const level = parts[0];
+                const division = parts[1];
+                const riderHorsePair = parts.slice(2).join('-');
+                const levelNum = parseInt(level.replace('L', ''));
+                
+                const qualifyingScores = scores.filter(s => s.average >= 58);
+                const requiredShows = levelNum <= 4 ? 3 : 1;
+                const isQualified = qualifyingScores.length >= requiredShows;
+                const averageScore = scores.reduce((sum, s) => sum + s.average, 0) / scores.length;
+                
+                eligibility.push({
+                    riderHorsePair,
+                    level,
+                    division,
+                    totalShows: scores.length,
+                    qualifyingShows: qualifyingScores.length,
+                    averageScore,
+                    requiredShows,
+                    isQualified,
+                    shows: scores.map(s => ({
+                        name: s.showName,
+                        date: s.showDate,
+                        average: s.average,
+                        qualifying: s.average >= 58
+                    }))
+                });
+            });
+            
+            return eligibility.sort((a, b) => {
+                if (a.level !== b.level) return a.level.localeCompare(b.level);
+                if (a.division !== b.division) return a.division.localeCompare(b.division);
+                if (a.isQualified !== b.isQualified) return b.isQualified - a.isQualified;
+                return b.averageScore - a.averageScore;
+            });
+        }
+    </script>
+</body>
+</html>
