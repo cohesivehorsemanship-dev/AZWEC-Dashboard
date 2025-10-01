@@ -549,10 +549,25 @@
             }
         }
         
+        // Helper function to check if a score is valid (all trials completed)
+        function isValidScore(score) {
+            // Level 1 requires: Dressage and EOH (no speed required)
+            if (score.level === 'L1' || score.level === '1') {
+                return score.dressageScore > 0 && score.eohScore > 0;
+            }
+            
+            // Levels 2-7 require: Dressage, EOH, and Speed
+            // For speed, we check if there's a finalTime value
+            return score.dressageScore > 0 && score.eohScore > 0 && score.finalTime !== null && score.finalTime !== undefined && score.finalTime > 0;
+        }
+        
         function calculateEOYStandings(shows) {
+            // Filter to only include valid scores (no DQ/WD)
+            const validShows = shows.filter(score => isValidScore(score));
+            
             // Group by level-division-pair
             const grouped = {};
-            shows.forEach(score => {
+            validShows.forEach(score => {
                 const key = `${score.level}-${score.division}-${score.riderHorsePair}`;
                 if (!grouped[key]) grouped[key] = [];
                 grouped[key].push(score);
@@ -752,9 +767,12 @@
         function checkFinalsEligibility() {
             const allShows = [...allData.schoolingShows, ...allData.licensedShows];
             
+            // Filter to only include valid scores (no DQ/WD)
+            const validShows = allShows.filter(score => isValidScore(score));
+            
             // Group by level-division-pair
             const grouped = {};
-            allShows.forEach(score => {
+            validShows.forEach(score => {
                 const key = `${score.level}-${score.division}-${score.riderHorsePair}`;
                 if (!grouped[key]) grouped[key] = [];
                 grouped[key].push(score);
@@ -774,7 +792,7 @@
                 const isQualified = qualifyingScores.length >= requiredShows;
                 
                 // IMPORTANT: Calculate average using ONLY qualifying scores (≥58%)
-                // If no qualifying scores, use all scores for display purposes
+                // If no qualifying scores, use all valid scores for display purposes
                 const averageScore = qualifyingScores.length > 0
                     ? qualifyingScores.reduce((sum, s) => sum + s.average, 0) / qualifyingScores.length
                     : scores.reduce((sum, s) => sum + s.average, 0) / scores.length;
