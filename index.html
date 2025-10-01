@@ -566,20 +566,33 @@
                 const division = parts[1];
                 const riderHorsePair = parts.slice(2).join('-');
                 
-                // Sort by average (highest first) and take top 4 shows
-                scores.sort((a, b) => b.average - a.average);
+                // IMPORTANT: Sort by PLACEMENT (best placement first), not average!
+                // Lower placement number is better (1st place = 1, 2nd = 2, etc.)
+                scores.sort((a, b) => {
+                    // First sort by placement (if available)
+                    if (a.placement && b.placement) {
+                        return a.placement - b.placement; // Lower is better
+                    }
+                    // If one has placement and other doesn't, prefer the one with placement
+                    if (a.placement && !b.placement) return -1;
+                    if (!a.placement && b.placement) return 1;
+                    // If neither has placement, fall back to average (higher is better)
+                    return b.average - a.average;
+                });
+                
+                // Take the top 4 shows BY PLACEMENT
                 const topScores = scores.slice(0, 4);
                 
-                if (topScores.length >= 2) {
-                    // Calculate points from ACTUAL PLACEMENTS in the shows
+                if (topScores.length >= 2) { // Need at least 2 shows
+                    // Calculate points from the placements
                     let totalPoints = 0;
                     topScores.forEach(score => {
-                        // Points based on placement: 1st = 10, 2nd = 9, etc.
                         if (score.placement && score.placement > 0) {
                             totalPoints += Math.max(0, 11 - score.placement);
                         }
                     });
                     
+                    // Calculate average from these 4 shows
                     const totalAverage = topScores.reduce((sum, s) => sum + s.average, 0) / topScores.length;
                     
                     standings.push({
@@ -594,7 +607,7 @@
                             placement: s.placement
                         })),
                         overallAverage: totalAverage,
-                        points: totalPoints  // This is now from actual placements!
+                        points: totalPoints
                     });
                 }
             });
@@ -611,7 +624,7 @@
             Object.values(levelDivGroups).forEach(group => {
                 group.sort((a, b) => {
                     if (b.points !== a.points) {
-                        return b.points - a.points; // Sort by points first
+                        return b.points - a.points; // Higher points = better
                     }
                     return b.overallAverage - a.overallAverage; // Use average to break ties
                 });
@@ -759,7 +772,12 @@
                 const qualifyingScores = scores.filter(s => s.average >= 58);
                 const requiredShows = levelNum <= 4 ? 3 : 1;
                 const isQualified = qualifyingScores.length >= requiredShows;
-                const averageScore = scores.reduce((sum, s) => sum + s.average, 0) / scores.length;
+                
+                // IMPORTANT: Calculate average using ONLY qualifying scores (≥58%)
+                // If no qualifying scores, use all scores for display purposes
+                const averageScore = qualifyingScores.length > 0
+                    ? qualifyingScores.reduce((sum, s) => sum + s.average, 0) / qualifyingScores.length
+                    : scores.reduce((sum, s) => sum + s.average, 0) / scores.length;
                 
                 eligibility.push({
                     riderHorsePair,
