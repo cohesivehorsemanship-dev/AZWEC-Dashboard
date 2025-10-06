@@ -722,6 +722,14 @@
             
             let html = `
                 <h2 style="margin-bottom: 20px;">AZWEC Finals Eligibility</h2>
+                <div style="background: #fef5e7; border: 1px solid #f9e79f; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
+                    <strong>Requirements:</strong>
+                    <ul style="margin-top: 10px;">
+                        <li>Levels 1-4: Need 3 qualifying scores (58% or higher) with at least 1 from a licensed show</li>
+                        <li>Levels 5-7: Need 1 qualifying score (58% or higher) from a licensed show</li>
+                        <li>All trials must be completed (no DQ/WD)</li>
+                    </ul>
+                </div>
                 <div class="table-container">
                     <table>
                         <thead>
@@ -731,6 +739,7 @@
                                 <th>Division</th>
                                 <th style="text-align: right;">Average %</th>
                                 <th style="text-align: center;">Qualifying Shows</th>
+                                <th style="text-align: center;">Licensed Qualifying</th>
                                 <th style="text-align: center;">Status</th>
                                 <th>Show Details</th>
                             </tr>
@@ -742,6 +751,15 @@
                 const statusBadge = item.isQualified ? 'badge-qualified' : 'badge-not-qualified';
                 const statusText = item.isQualified ? '✓ QUALIFIED' : 'NOT YET';
                 
+                // Show details with licensing indicator
+                const showDetails = item.shows.map(s => {
+                    const typeIndicator = s.isLicensed ? '(L)' : '(S)';
+                    const qualifyingMark = s.qualifying ? '✓' : '';
+                    const style = s.qualifying && s.isLicensed ? 'color: #0066cc; font-weight: bold;' : 
+                                  s.qualifying ? 'color: #276749;' : 'color: #999;';
+                    return `<span style="${style}">${s.date} ${typeIndicator}: ${s.average.toFixed(2)}% ${qualifyingMark}</span>`;
+                }).join('<br>');
+                
                 html += `
                     <tr>
                         <td><strong>${item.riderHorsePair}</strong></td>
@@ -749,8 +767,13 @@
                         <td>${item.division}</td>
                         <td style="text-align: right;"><strong>${item.averageScore.toFixed(2)}%</strong></td>
                         <td style="text-align: center;"><strong>${item.qualifyingShows} / ${item.requiredShows}</strong></td>
+                        <td style="text-align: center;">
+                            <strong style="${item.qualifyingLicensedShows > 0 ? 'color: green;' : 'color: red;'}">
+                                ${item.qualifyingLicensedShows}
+                            </strong>
+                        </td>
                         <td style="text-align: center;"><span class="badge ${statusBadge}">${statusText}</span></td>
-                        <td>${item.shows.map(s => `${s.date}: ${s.average.toFixed(2)}% ${s.qualifying ? '✓' : ''}`).join('<br>')}</td>
+                        <td>${showDetails}</td>
                     </tr>
                 `;
             });
@@ -758,6 +781,9 @@
             html += `
                         </tbody>
                     </table>
+                </div>
+                <div style="margin-top: 15px; font-size: 12px; color: #666;">
+                    <strong>Legend:</strong> (L) = Licensed Show, (S) = Schooling Show, ✓ = Qualifying Score (58%+)
                 </div>
             `;
             
@@ -788,11 +814,22 @@
                 const levelNum = parseInt(level.replace('L', ''));
                 
                 const qualifyingScores = scores.filter(s => s.average >= 58);
+                const qualifyingLicensedScores = qualifyingScores.filter(s => s.isLicensed);
                 const requiredShows = levelNum <= 4 ? 3 : 1;
-                const isQualified = qualifyingScores.length >= requiredShows;
                 
-                // IMPORTANT: Calculate average using ONLY qualifying scores (≥58%)
-                // If no qualifying scores, use all valid scores for display purposes
+                // NEW REQUIREMENT: At least 1 qualifying score must be from a licensed show
+                // For levels 1-4: Need 3 qualifying scores total, with at least 1 licensed
+                // For levels 5-7: Need 1 qualifying score, which must be licensed
+                let isQualified = false;
+                if (levelNum <= 4) {
+                    // Levels 1-4: Need 3 qualifying scores with at least 1 from licensed show
+                    isQualified = qualifyingScores.length >= 3 && qualifyingLicensedScores.length >= 1;
+                } else {
+                    // Levels 5-7: Need 1 qualifying score, must be from licensed show
+                    isQualified = qualifyingLicensedScores.length >= 1;
+                }
+                
+                // Calculate average using ONLY qualifying scores (≥58%)
                 const averageScore = qualifyingScores.length > 0
                     ? qualifyingScores.reduce((sum, s) => sum + s.average, 0) / qualifyingScores.length
                     : scores.reduce((sum, s) => sum + s.average, 0) / scores.length;
@@ -803,6 +840,7 @@
                     division,
                     totalShows: scores.length,
                     qualifyingShows: qualifyingScores.length,
+                    qualifyingLicensedShows: qualifyingLicensedScores.length,
                     averageScore,
                     requiredShows,
                     isQualified,
@@ -810,7 +848,8 @@
                         name: s.showName,
                         date: s.showDate,
                         average: s.average,
-                        qualifying: s.average >= 58
+                        qualifying: s.average >= 58,
+                        isLicensed: s.isLicensed
                     }))
                 });
             });
