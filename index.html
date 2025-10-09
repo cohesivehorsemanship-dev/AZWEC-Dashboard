@@ -723,11 +723,13 @@
             let html = `
                 <h2 style="margin-bottom: 20px;">AZWEC Finals Eligibility</h2>
                 <div style="background: #fef5e7; border: 1px solid #f9e79f; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
-                    <strong>Requirements:</strong>
+                    <strong>2025 AZWEC Finals Requirements:</strong>
                     <ul style="margin-top: 10px;">
-                        <li>Levels 1-4: Need 3 qualifying scores (58% or higher) with at least 1 from a licensed show</li>
-                        <li>Levels 5-7: Need 1 qualifying score (58% or higher) from a licensed show</li>
+                        <li><strong>Levels 1-4:</strong> Need 3 qualifying scores (58% or higher)</li>
+                        <li><strong>Levels 5-7:</strong> Need 1 qualifying score (58% or higher)</li>
+                        <li>Qualifying scores can come from either licensed or schooling shows</li>
                         <li>All trials must be completed (no DQ/WD)</li>
+                        <li>Average is calculated from qualifying scores only</li>
                     </ul>
                 </div>
                 <div class="table-container">
@@ -739,7 +741,6 @@
                                 <th>Division</th>
                                 <th style="text-align: right;">Average %</th>
                                 <th style="text-align: center;">Qualifying Shows</th>
-                                <th style="text-align: center;">Licensed Qualifying</th>
                                 <th style="text-align: center;">Status</th>
                                 <th>Show Details</th>
                             </tr>
@@ -751,12 +752,11 @@
                 const statusBadge = item.isQualified ? 'badge-qualified' : 'badge-not-qualified';
                 const statusText = item.isQualified ? '✓ QUALIFIED' : 'NOT YET';
                 
-                // Show details with licensing indicator
+                // Show details with licensing indicator (informational only)
                 const showDetails = item.shows.map(s => {
                     const typeIndicator = s.isLicensed ? '(L)' : '(S)';
                     const qualifyingMark = s.qualifying ? '✓' : '';
-                    const style = s.qualifying && s.isLicensed ? 'color: #0066cc; font-weight: bold;' : 
-                                  s.qualifying ? 'color: #276749;' : 'color: #999;';
+                    const style = s.qualifying ? 'color: #276749; font-weight: 600;' : 'color: #999;';
                     return `<span style="${style}">${s.date} ${typeIndicator}: ${s.average.toFixed(2)}% ${qualifyingMark}</span>`;
                 }).join('<br>');
                 
@@ -766,10 +766,9 @@
                         <td style="text-align: center;">${item.level}</td>
                         <td>${item.division}</td>
                         <td style="text-align: right;"><strong>${item.averageScore.toFixed(2)}%</strong></td>
-                        <td style="text-align: center;"><strong>${item.qualifyingShows} / ${item.requiredShows}</strong></td>
                         <td style="text-align: center;">
-                            <strong style="${item.qualifyingLicensedShows > 0 ? 'color: green;' : 'color: red;'}">
-                                ${item.qualifyingLicensedShows}
+                            <strong style="${item.qualifyingShows >= item.requiredShows ? 'color: green;' : 'color: #c05621;'}">
+                                ${item.qualifyingShows} / ${item.requiredShows}
                             </strong>
                         </td>
                         <td style="text-align: center;"><span class="badge ${statusBadge}">${statusText}</span></td>
@@ -817,17 +816,8 @@
                 const qualifyingLicensedScores = qualifyingScores.filter(s => s.isLicensed);
                 const requiredShows = levelNum <= 4 ? 3 : 1;
                 
-                // NEW REQUIREMENT: At least 1 qualifying score must be from a licensed show
-                // For levels 1-4: Need 3 qualifying scores total, with at least 1 licensed
-                // For levels 5-7: Need 1 qualifying score, which must be licensed
-                let isQualified = false;
-                if (levelNum <= 4) {
-                    // Levels 1-4: Need 3 qualifying scores with at least 1 from licensed show
-                    isQualified = qualifyingScores.length >= 3 && qualifyingLicensedScores.length >= 1;
-                } else {
-                    // Levels 5-7: Need 1 qualifying score, must be from licensed show
-                    isQualified = qualifyingLicensedScores.length >= 1;
-                }
+                // UPDATED: No licensed show requirement for 2025
+                const isQualified = qualifyingScores.length >= requiredShows;
                 
                 // Calculate average using ONLY qualifying scores (≥58%)
                 const averageScore = qualifyingScores.length > 0
