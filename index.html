@@ -663,6 +663,18 @@
             
             let html = `
                 <h2 style="margin-bottom: 20px;">${title}</h2>
+                <div style="background: #e8f4f8; border: 1px solid #b8d4e3; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
+                    <strong>EOY Awards Eligibility & Scoring Criteria:</strong>
+                    <ul style="margin-top: 10px; margin-bottom: 0;">
+                        <li><strong>Membership:</strong> Must be a current AZWEC member in good standing</li>
+                        <li><strong>Eligibility:</strong> Rider/horse pairs must compete in at least 2 shows to be eligible for EOY awards</li>
+                        <li><strong>Scoring:</strong> Top 4 shows count (based on best placements, not highest scores)</li>
+                        <li><strong>Points:</strong> 1st place = 10 pts, 2nd = 9 pts, 3rd = 8 pts, etc.</li>
+                        <li><strong>Ranking:</strong> Pairs are ranked by total points within each level/division</li>
+                        <li><strong>Tiebreaker:</strong> Highest average dressage/EOH score from the 4 shows used</li>
+                        <li><strong>Valid Scores Only:</strong> DQ/WD results are not counted</li>
+                    </ul>
+                </div>
                 <div class="table-container">
                     <table>
                         <thead>
@@ -711,78 +723,6 @@
             html += `
                         </tbody>
                     </table>
-                </div>
-            `;
-            
-            document.getElementById('contentSection').innerHTML = html;
-        }
-        
-        function displayFinalsEligibility() {
-            const eligibility = checkFinalsEligibility();
-            
-            let html = `
-                <h2 style="margin-bottom: 20px;">AZWEC Finals Eligibility</h2>
-                <div style="background: #fef5e7; border: 1px solid #f9e79f; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
-                    <strong>2025 AZWEC Finals Requirements:</strong>
-                    <ul style="margin-top: 10px;">
-                        <li><strong>Levels 1-4:</strong> Need 3 qualifying scores (58% or higher)</li>
-                        <li><strong>Levels 5-7:</strong> Need 1 qualifying score (58% or higher)</li>
-                        <li>Qualifying scores can come from either licensed or schooling shows</li>
-                        <li>All trials must be completed (no DQ/WD)</li>
-                        <li>Average is calculated from qualifying scores only</li>
-                    </ul>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Rider/Horse</th>
-                                <th>Level</th>
-                                <th>Division</th>
-                                <th style="text-align: right;">Average %</th>
-                                <th style="text-align: center;">Qualifying Shows</th>
-                                <th style="text-align: center;">Status</th>
-                                <th>Show Details</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-            
-            eligibility.forEach(item => {
-                const statusBadge = item.isQualified ? 'badge-qualified' : 'badge-not-qualified';
-                const statusText = item.isQualified ? '✓ QUALIFIED' : 'NOT YET';
-                
-                // Show details with licensing indicator (informational only)
-                const showDetails = item.shows.map(s => {
-                    const typeIndicator = s.isLicensed ? '(L)' : '(S)';
-                    const qualifyingMark = s.qualifying ? '✓' : '';
-                    const style = s.qualifying ? 'color: #276749; font-weight: 600;' : 'color: #999;';
-                    return `<span style="${style}">${s.date} ${typeIndicator}: ${s.average.toFixed(2)}% ${qualifyingMark}</span>`;
-                }).join('<br>');
-                
-                html += `
-                    <tr>
-                        <td><strong>${item.riderHorsePair}</strong></td>
-                        <td style="text-align: center;">${item.level}</td>
-                        <td>${item.division}</td>
-                        <td style="text-align: right;"><strong>${item.averageScore.toFixed(2)}%</strong></td>
-                        <td style="text-align: center;">
-                            <strong style="${item.qualifyingShows >= item.requiredShows ? 'color: green;' : 'color: #c05621;'}">
-                                ${item.qualifyingShows} / ${item.requiredShows}
-                            </strong>
-                        </td>
-                        <td style="text-align: center;"><span class="badge ${statusBadge}">${statusText}</span></td>
-                        <td>${showDetails}</td>
-                    </tr>
-                `;
-            });
-            
-            html += `
-                        </tbody>
-                    </table>
-                </div>
-                <div style="margin-top: 15px; font-size: 12px; color: #666;">
-                    <strong>Legend:</strong> (L) = Licensed Show, (S) = Schooling Show, ✓ = Qualifying Score (58%+)
                 </div>
             `;
             
@@ -850,6 +790,79 @@
                 if (a.isQualified !== b.isQualified) return b.isQualified - a.isQualified;
                 return b.averageScore - a.averageScore;
             });
+        }
+        
+        function displayFinalsEligibility() {
+            const eligibility = checkFinalsEligibility();
+            
+            let html = `
+                <h2 style="margin-bottom: 20px;">AZWEC Finals Eligibility</h2>
+                <div style="background: #fef5e7; border: 1px solid #f9e79f; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
+                    <strong>2025 AZWEC Finals Requirements:</strong>
+                    <ul style="margin-top: 10px;">
+                        <li><strong>Membership:</strong> Must be a current AZWEC member in good standing</li>
+                        <li><strong>Levels 1-4:</strong> Need 3 qualifying scores (58% or higher)</li>
+                        <li><strong>Levels 5-7:</strong> Need 1 qualifying score (58% or higher)</li>
+                        <li>Qualifying scores can come from either licensed or schooling shows</li>
+                        <li>All trials must be completed (no DQ/WD)</li>
+                        <li>Average is calculated from qualifying scores only</li>
+                    </ul>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rider/Horse</th>
+                                <th>Level</th>
+                                <th>Division</th>
+                                <th style="text-align: right;">Average %</th>
+                                <th style="text-align: center;">Qualifying Shows</th>
+                                <th style="text-align: center;">Status</th>
+                                <th>Show Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            eligibility.forEach(item => {
+                const statusBadge = item.isQualified ? 'badge-qualified' : 'badge-not-qualified';
+                const statusText = item.isQualified ? '✓ QUALIFIED' : 'NOT YET';
+                
+                // Show details with licensing indicator (informational only)
+                const showDetails = item.shows.map(s => {
+                    const typeIndicator = s.isLicensed ? '(L)' : '(S)';
+                    const qualifyingMark = s.qualifying ? '✓' : '';
+                    const style = s.qualifying ? 'color: #276749; font-weight: 600;' : 'color: #999;';
+                    return `<span style="${style}">${s.date} ${typeIndicator}: ${s.average.toFixed(2)}% ${qualifyingMark}</span>`;
+                }).join('<br>');
+                
+                html += `
+                    <tr>
+                        <td><strong>${item.riderHorsePair}</strong></td>
+                        <td style="text-align: center;">${item.level}</td>
+                        <td>${item.division}</td>
+                        <td style="text-align: right;"><strong>${item.averageScore.toFixed(2)}%</strong></td>
+                        <td style="text-align: center;">
+                            <strong style="${item.qualifyingShows >= item.requiredShows ? 'color: green;' : 'color: #c05621;'}">
+                                ${item.qualifyingShows} / ${item.requiredShows}
+                            </strong>
+                        </td>
+                        <td style="text-align: center;"><span class="badge ${statusBadge}">${statusText}</span></td>
+                        <td>${showDetails}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 15px; font-size: 12px; color: #666;">
+                    <strong>Legend:</strong> (L) = Licensed Show, (S) = Schooling Show, ✓ = Qualifying Score (58%+)
+                </div>
+            `;
+            
+            document.getElementById('contentSection').innerHTML = html;
         }
     </script>
 </body>
